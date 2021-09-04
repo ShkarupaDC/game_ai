@@ -5,8 +5,8 @@ description = "Pacman game with AI agents"
 authors = ["ShkarupaDC <dimon.shkarupa@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pygame = "^2.0.1"
+python = "~3.9"
+numpy = "^1.21.2"
 
 [tool.poetry.dev-dependencies]
 
