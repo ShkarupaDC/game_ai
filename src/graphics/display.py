@@ -17,7 +17,7 @@ class InfoPane:
         self.grid_size = grid_size
         self.base = (layout.height + 1) * grid_size
         self.font_size = 24
-        self.text_color = PACMAN_COLOR
+        self.text_color = Pacman.COLOR
         self.draw_pane()
 
     def to_screen(self, position: tuple[float, float]) -> tuple[float, float]:
@@ -49,7 +49,7 @@ class PacmanGraphics:
         self.ui = ui
         self.have_window = 0
         self.zoom = zoom
-        self.grid_size = DEFAULT_GRID_SIZE * zoom
+        self.grid_size = MainWindow.GRID_SIZE * zoom
         self.frame_time = frame_time
 
     def init(self, state: GameState) -> None:
@@ -125,19 +125,19 @@ class PacmanGraphics:
 
         self.ui.init_ui(
             grid_width + offset,
-            grid_height + offset + INFO_PANE_HEIGHT,
-            color=BACKGROUND_COLOR,
+            grid_height + offset + Info.HEIGHT,
+            color=MainWindow.BACKGROUND_COLOR,
             title="Pacman",
         )
 
     def __draw_pacman(self, pacman: AgentState) -> list[int]:
         body = self.ui.circle(
             self.to_screen(self.__get_position(pacman)),
-            PACMAN_SCALE * self.grid_size,
-            PACMAN_COLOR,
-            PACMAN_COLOR,
+            Pacman.SCALE * self.grid_size,
+            Pacman.COLOR,
+            Pacman.COLOR,
             self.get_endpoints(self.__get_direction(pacman)),
-            width=PACMAN_OUTLINE_WIDTH,
+            width=Pacman.OUTLINE_WIDTH,
         )
         return [body]
 
@@ -164,7 +164,7 @@ class PacmanGraphics:
         screen = self.to_screen(position)
         endpoints = self.get_endpoints(direction, position)
 
-        radius = PACMAN_SCALE * self.grid_size
+        radius = Pacman.SCALE * self.grid_size
 
         self.ui.move_circle(image[0], screen, radius, endpoints)
         self.ui.refresh()
@@ -176,10 +176,11 @@ class PacmanGraphics:
             x, y = self.__get_position(pacman)
             xx, yy = self.__get_position(prev_pacman)
 
-            for idx in range(1, int(FRAMES) + 1):
+            frames = Pacman.FRAMES
+            for idx in range(1, int(frames) + 1):
                 position = Vector(
-                    x * idx / FRAMES + xx * (FRAMES - idx) / FRAMES,
-                    y * idx / FRAMES + yy * (FRAMES - idx) / FRAMES,
+                    x * idx / frames + xx * (frames - idx) / frames,
+                    y * idx / frames + yy * (frames - idx) / frames,
                 )
                 self.move_pacman(
                     position,
@@ -187,7 +188,7 @@ class PacmanGraphics:
                     image,
                 )
                 self.ui.refresh()
-                self.ui.sleep(abs(self.frame_time) / FRAMES)
+                self.ui.sleep(abs(self.frame_time) / frames)
         else:
             self.move_pacman(
                 self.__get_position(pacman),
@@ -198,18 +199,18 @@ class PacmanGraphics:
 
     def __get_ghost_color(self, ghost: AgentState, ghost_idx: int) -> int:
         if ghost.scared_timer > 0:
-            return SCARED_COLOR
+            return Ghost.SCARED_COLOR
         else:
-            return GHOST_COLORS[ghost_idx]
+            return Ghost.COLORS[ghost_idx]
 
     def __draw_ghost(self, ghost, agent_idx: int) -> list[int]:
         screen_x, screen_y = self.to_screen(self.__get_position(ghost))
         coords = [
             (
-                x * self.grid_size * GHOST_SIZE + screen_x,
-                y * self.grid_size * GHOST_SIZE + screen_y,
+                x * self.grid_size * Ghost.SIZE + screen_x,
+                y * self.grid_size * Ghost.SIZE + screen_y,
             )
-            for x, y in GHOST_SHAPE
+            for x, y in Ghost.SHAPE
         ]
         colour = self.__get_ghost_color(ghost, agent_idx)
         body = self.ui.polygon(coords, colour, filled=1)
@@ -270,7 +271,7 @@ class PacmanGraphics:
                         self.ui.line(
                             screen.as_tuple(),
                             (screen + end_shift).as_tuple(),
-                            WALL_COLOR,
+                            Wall.COLOR,
                         )
                     if (
                         (east_is_wall and west_is_wall)
@@ -282,7 +283,7 @@ class PacmanGraphics:
                         self.ui.line(
                             screen.as_tuple(),
                             (screen + end_shift).as_tuple(),
-                            WALL_COLOR,
+                            Wall.COLOR,
                         )
 
     def __is_wall(self, x: int, y: int, walls: Grid) -> bool:
@@ -302,9 +303,9 @@ class PacmanGraphics:
                     screen = self.to_screen((x, y))
                     point = self.ui.circle(
                         screen,
-                        FOOD_SIZE * self.grid_size,
-                        FOOD_COLOR,
-                        FOOD_COLOR,
+                        Food.SIZE * self.grid_size,
+                        Food.COLOR,
+                        Food.COLOR,
                         width=1,
                     )
                     image_row.append(point)
@@ -318,9 +319,9 @@ class PacmanGraphics:
             screen = self.to_screen(capsule)
             point = self.ui.circle(
                 screen,
-                CAPSULE_SIZE * self.grid_size,
-                CAPSULE_COLOR,
-                CAPSULE_COLOR,
+                Capsule.SIZE * self.grid_size,
+                Capsule.COLOR,
+                Capsule.COLOR,
                 width=1,
             )
             capsule_images[capsule] = point

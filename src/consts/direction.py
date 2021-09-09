@@ -9,7 +9,7 @@ class Directions:
     EAST = 2
 
 
-DIRECTIONS = {
+DIRECTION_TO_VECTOR = {
     Directions.NORTH: Vector(0, 1),
     Directions.SOUTH: Vector(0, -1),
     Directions.EAST: Vector(1, 0),
