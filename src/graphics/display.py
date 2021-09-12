@@ -3,12 +3,12 @@ from tkinter import Grid
 from typing import Optional, Union
 
 from ..consts.graphics import *
-from ..consts.direction import Directions
+from ..consts.direction import Direction
 from ..utils.layout import Layout
 from ..utils.vector import Vector
 from ..graphics.ui import UI
 from ..pacman.rules import GameState
-from ..pacman.game import AgentState
+from ..pacman.game import AgentState, GameStateData
 
 
 class InfoPane:
@@ -96,7 +96,7 @@ class PacmanGraphics:
         self.agent_images[agent_idx] = (new_state, image)
         self.ui.refresh()
 
-    def update(self, new_state: GameState) -> None:
+    def update(self, new_state: GameStateData) -> None:
         agent_idx = new_state._agent_moved
         state = new_state.agent_states[agent_idx]
 
@@ -115,6 +115,8 @@ class PacmanGraphics:
         if new_state._food_eaten is not None:
             self.__remove_food(new_state._food_eaten, self.food)
 
+        if new_state.ghost_search is not None:
+            self.__draw_path_to_ghosts(new_state)
         self.info_pane.update_score(new_state.score)
 
     def __make_window(self, width: int, height: int) -> None:
@@ -150,11 +152,11 @@ class PacmanGraphics:
         delta = width / 2
 
         endpoints = {
-            Directions.WEST: (180 + delta, 180 - delta),
-            Directions.NORTH: (90 + delta, 90 - delta),
-            Directions.STOP: (delta, -delta),
-            Directions.SOUTH: (270 + delta, 270 - delta),
-            Directions.EAST: (delta, -delta),
+            Direction.WEST: (180 + delta, 180 - delta),
+            Direction.NORTH: (90 + delta, 90 - delta),
+            Direction.STOP: (delta, -delta),
+            Direction.SOUTH: (270 + delta, 270 - delta),
+            Direction.EAST: (delta, -delta),
         }
         return endpoints[direction]
 
@@ -229,6 +231,27 @@ class PacmanGraphics:
         self.ui.edit(image_parts[0], fill=color, outline=color)
         self.ui.refresh()
 
+    def __draw_path_to_ghosts(self, state: GameStateData) -> None:
+        if hasattr(self, "ghost_paths"):
+            for path in self.ghost_paths:
+                self.ui.remove_from_screen(path)
+        ghost_paths = []
+
+        for idx, path in state.ghost_search.paths:
+            color = Ghost.COLORS[idx]
+
+            for node in path:
+                screen = self.to_screen(node)
+                image = self.ui.circle(
+                    screen,
+                    Path.SCALE * self.grid_size,
+                    color,
+                    style="arc",
+                    width=1,
+                )
+                ghost_paths.append(image)
+        self.ghost_paths = ghost_paths
+
     def __get_position(self, agent_state: AgentState) -> Vector:
         if agent_state.configuration is None:
             return Vector(-1e3, -1e3)
@@ -236,7 +259,7 @@ class PacmanGraphics:
 
     def __get_direction(self, agent_state: AgentState) -> int:
         if agent_state.configuration is None:
-            return Directions.STOP
+            return Direction.STOP
         return agent_state.get_direction()
 
     def finish(self) -> None:

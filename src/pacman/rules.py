@@ -1,14 +1,15 @@
-import copy
 from dataclasses import InitVar, dataclass
 from typing import Optional
 
 from .game import GameStateData, Game
 from .agent import Agent, Actions, AgentState
 from ..consts.game import *
-from ..consts.direction import Directions
-from ..graphics.ui import UI
+from ..consts.types import Position
+from ..consts.direction import Direction
 from ..utils.layout import Layout
 from ..utils.vector import Vector
+from ..utils.grid import Grid
+from ..utils.general import copy_interface
 
 
 @dataclass
@@ -49,6 +50,9 @@ class GameState:
 
         state.data._agent_moved = agent_idx
         state.data.score += state.data.score_change
+
+        if state.data.ghost_search is not None:
+            state.data.ghost_search.update(state)
         return state
 
     def is_lose(self) -> bool:
@@ -58,31 +62,35 @@ class GameState:
         return self.data._win
 
     def initialize(
-        self, ui: UI, layout: Layout, num_ghost_agents: int = 1000
+        self, layout: Layout, ghost_search, num_ghost_agents: int
     ) -> None:
-        GameState.keys_pressed = ui.keys_pressed
-        GameState.keys_waiting = ui.keys_waiting
-        self.data.initialize(layout, num_ghost_agents)
+        self.data.initialize(layout, ghost_search, num_ghost_agents)
 
     def get_pacman_state(self) -> AgentState:
         return self.data.agent_states[0]
 
-    def get_pacman_position(self) -> tuple[float, float]:
-        return self.get_pacman_state().get_position()
+    def get_ghost_state(self, idx: int) -> AgentState:
+        if idx <= 0 or idx >= self.get_num_agents():
+            raise Exception("Invalid ghost index")
+        return self.data.agent_states[idx]
 
     def get_num_agents(self) -> int:
         return len(self.data.agent_states)
 
-    def get_capsules(self) -> list:
+    def get_capsules(self) -> list[Position]:
         return self.data.capsules
+
+    def get_walls(self) -> Grid:
+        return self.data.layout.walls
 
     def get_num_food(self) -> int:
         return self.data.food.count()
 
-    def get_ghost_state(self, agent_idx: int) -> AgentState:
-        if agent_idx == 0 or agent_idx >= self.get_num_agents():
-            raise Exception("Invalid index")
-        return self.data.agent_states[agent_idx]
+    def get_pacman_position(self) -> Position:
+        return self.get_pacman_state().get_position()
+
+    def get_ghost_position(self, idx: int) -> Position:
+        return self.get_ghost_state(idx).get_position()
 
 
 class GameRules:
@@ -92,13 +100,14 @@ class GameRules:
         pacman_agent: list[Agent],
         ghost_agents: list[Agent],
         display,
+        ghost_search=None,
     ) -> Game:
         agents = [pacman_agent] + ghost_agents[: layout.get_num_ghosts()]
+        copy_interface(display.ui, GameState, ["keys_pressed", "keys_waiting"])
         state = GameState()
-        state.initialize(display.ui, layout, len(ghost_agents))
+        state.initialize(layout, ghost_search, len(ghost_agents))
         game = Game(agents, display, self)
         game.state = state
-        self.initialState = copy.deepcopy(state)
         return game
 
     def process(self, state: GameState, game: Game) -> None:
@@ -170,7 +179,7 @@ class GhostRules:
         reverse = Actions.reverse_direction(configuration.get_direction())
         actions = list(
             filter(
-                lambda action: action != Directions.STOP,
+                lambda action: action != Direction.STOP,
                 Actions.get_possible_actions(
                     configuration, state.data.layout.walls
                 ),

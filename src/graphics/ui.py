@@ -2,7 +2,7 @@ import time
 import tkinter
 from typing import Optional, Callable
 
-from ..consts.graphics import Color
+from ..consts.graphics import Color, Key
 
 
 class UI:
@@ -219,7 +219,8 @@ class UI:
 
     def __key_press(self, event: tkinter.Event) -> None:
         self.keys_down[event.keysym] = 1
-        self.keys_wait[event.keysym] = 1
+        if event.keysym in Key.control_keys():
+            self.keys_wait[event.keysym] = 1
         self.got_release = None
 
     def __key_release(self, event: tkinter.Event) -> None:
@@ -238,16 +239,16 @@ class UI:
         self,
         fn: Optional[Callable] = None,
         param: int = tkinter._tkinter.DONT_WAIT,
-    ) -> list:
+    ) -> list[str]:
         if fn is None:
             fn = lambda arg: self.master.dooneevent(arg)
         fn(param)
         if self.got_release != 0:
             fn(param)
-        return self.keys_down.keys()
+        return list(self.keys_down.keys())
 
-    def keys_waiting(self) -> dict:
-        keys = self.keys_wait.keys()
+    def keys_waiting(self) -> list[str]:
+        keys = list(self.keys_wait.keys())
         self.keys_wait = {}
         return keys
 

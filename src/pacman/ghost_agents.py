@@ -1,6 +1,6 @@
 from collections import Counter
 
-from ..consts.direction import Directions
+from ..consts.direction import Direction
 from .game import Agent
 from .rules import GameState
 from ..utils.general import normalize, sample
@@ -13,7 +13,7 @@ class GhostAgent(Agent):
     def get_action(self, state: GameState) -> int:
         dist = self.get_distribution(state)
         if len(dist) == 0:
-            return Directions.STOP
+            return Direction.STOP
         return sample(dist)
 
     def get_distribution(self, state: GameState) -> dict[int, float]:

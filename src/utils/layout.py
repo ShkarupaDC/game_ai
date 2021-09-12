@@ -59,3 +59,7 @@ class Layout:
             return Layout(maze)
         except:
             return None
+
+    @staticmethod
+    def generate_layout() -> "Layout":
+        pass

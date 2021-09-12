@@ -27,7 +27,7 @@ class Configuration:
 
     def generate_next(self, vector: Vector) -> "Configuration":
         direction = Actions.vector_to_direction(vector)
-        if direction == Directions.STOP:
+        if direction == Direction.STOP:
             direction = self.direction
         return Configuration(self.position + vector, direction)
 
@@ -77,14 +77,14 @@ class Actions:
     def vector_to_direction(vector: Vector) -> int:
         dx, dy = vector
         if dy > 0:
-            return Directions.NORTH
+            return Direction.NORTH
         if dy < 0:
-            return Directions.SOUTH
+            return Direction.SOUTH
         if dx < 0:
-            return Directions.WEST
+            return Direction.WEST
         if dx > 0:
-            return Directions.EAST
-        return Directions.STOP
+            return Direction.EAST
+        return Direction.STOP
 
     @staticmethod
     def direction_to_vector(direction: int, speed: float = 1.0) -> Vector:

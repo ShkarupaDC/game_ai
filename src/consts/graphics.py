@@ -69,3 +69,24 @@ class Food:
 class Capsule:
     COLOR = Color.WHITE
     SIZE = 0.25
+
+
+class Path:
+    SCALE = 0.2
+
+
+class Key:
+    LEFT = "Left"
+    UP = "Up"
+    RIGHT = "Right"
+    DOWN = "Down"
+    Z = "z"
+
+    @staticmethod
+    def control_keys() -> list[str]:
+        return [
+            Key.LEFT,
+            Key.UP,
+            Key.RIGHT,
+            Key.DOWN,
+        ]

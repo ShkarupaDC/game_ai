@@ -1,6 +1,8 @@
+import time
 import random
+from functools import wraps
 from collections import Counter
-from typing import Union
+from typing import Any, Callable, Union
 
 
 def normalize(counter: dict[str, float]) -> dict[str, float]:
@@ -28,3 +30,31 @@ def color_to_vector(color: str) -> list[float]:
     ]
     mapping = lambda color: int(color, base) / 2 ** base
     return list(map(mapping, rgb))
+
+
+def copy_interface(parent: object, child: object, attrs: list[str]) -> object:
+    for name in attrs:
+        attribute = getattr(parent, name)
+        setattr(child, name, attribute)
+    return child
+
+
+def time_it(stdout: bool = False) -> Callable:
+    def timer(function: Callable) -> Callable:
+        @wraps(function)
+        def wrapper(*args, **kwargs) -> Any:
+            start = time.time()
+            result = function(*args, **kwargs)
+            end = time.time()
+
+            if stdout is True:
+                print(f"Time ({function.__name__}):", end - start)
+            return result
+
+        return wrapper
+
+    return timer
+
+
+def bitwise_or(xs: list[bool], ys: list[bool]) -> list[bool]:
+    return [x or y for x, y in zip(xs, ys)]

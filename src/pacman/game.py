@@ -2,10 +2,11 @@ import copy
 from typing import Optional
 from dataclasses import InitVar, dataclass
 
-from ..consts.direction import Directions
+# from .search import GhostSearchProblem
+from .agent import Agent, AgentState, Configuration
+from ..consts.direction import Direction
 from ..utils.vector import Vector
 from ..utils.layout import Layout
-from .agent import Agent, AgentState, Configuration
 
 
 @dataclass
@@ -20,19 +21,18 @@ class GameStateData:
 
     def __post_init__(self, state: Optional["GameStateData"] = None) -> None:
         if state is not None:
-            self.food = copy.copy(state.food)
+            self.ghost_search = copy.deepcopy(state.ghost_search)
+            self.food = copy.deepcopy(state.food)
             self.capsules = state.capsules[:]
-            self.agent_states = self.__copy_agent_states(state.agent_states)
+            self.agent_states = copy.deepcopy(state.agent_states)
             self.layout = state.layout
             self._eaten = state._eaten
             self.score = state.score
 
-    def __copy_agent_states(
-        self, agent_states: list[AgentState]
-    ) -> list[AgentState]:
-        return [copy.copy(state) for state in agent_states]
-
-    def initialize(self, layout: Layout, num_ghost_agents: int) -> None:
+    def initialize(
+        self, layout: Layout, ghost_search, num_ghost_agents: int
+    ) -> None:
+        self.ghost_search = ghost_search
         self.food = copy.deepcopy(layout.food)
         self.capsules = layout.capsules[:]
         self.layout = layout
@@ -48,7 +48,7 @@ class GameStateData:
                 else:
                     num_ghosts += 1
             self.agent_states.append(
-                AgentState(Configuration(position, Directions.STOP), is_pacman)
+                AgentState(Configuration(position, Direction.STOP), is_pacman)
             )
         self._eaten = [False] * len(self.agent_states)
 
@@ -65,6 +65,10 @@ class Game:
     def run(self) -> None:
         self.display.init(self.state.data)
         self.num_moves = 0
+
+        for agent in self.agents:
+            if hasattr(agent, "register"):
+                agent.register(self.state)
 
         agent_idx = 0
         num_agents = len(self.agents)
