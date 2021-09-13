@@ -20,7 +20,8 @@ class GhostSearch:
     def update(self, game_state: GameState) -> None:
         self.walls = game_state.get_walls()
         self.goals = [
-            game_state.get_ghost_position(idx) for idx in self.ghost_idxs
+            game_state.get_ghost_position(idx).as_int()
+            for idx in self.ghost_idxs
         ]
         self.start = game_state.get_pacman_position()
 

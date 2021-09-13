@@ -83,27 +83,11 @@ class PacmanGraphics:
         ]
         self.ui.refresh()
 
-    def __swap_images(self, agent_idx: int, new_state: AgentState) -> None:
-        prev_image = self.agent_images[agent_idx][1]
-        for image in prev_image:
-            self.ui.remove_from_screen(image)
-
-        image = (
-            self.__draw_pacman(new_state)
-            if new_state.is_pacman
-            else self.__draw_ghost(new_state, agent_idx)
-        )
-        self.agent_images[agent_idx] = (new_state, image)
-        self.ui.refresh()
-
     def update(self, new_state: GameStateData) -> None:
         agent_idx = new_state._agent_moved
         state = new_state.agent_states[agent_idx]
 
-        if self.agent_images[agent_idx][0].is_pacman != state.is_pacman:
-            self.__swap_images(agent_idx, state)
         prev_state, prev_image = self.agent_images[agent_idx]
-
         if state.is_pacman:
             self.__animate_pacman(state, prev_state, prev_image)
         else:

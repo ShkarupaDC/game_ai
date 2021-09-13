@@ -1,16 +1,17 @@
 import heapq
+from collections import deque
 from typing import Any, Union
 
 
 class Queue:
     def __init__(self) -> None:
-        self.data = []
+        self.data = deque()
 
     def push(self, value: Any) -> None:
-        self.data.insert(0, value)
+        self.data.append(value)
 
     def pop(self) -> Any:
-        return self.data.pop()
+        return self.data.popleft()
 
     def is_empty(self) -> bool:
         return len(self.data) == 0
@@ -18,7 +19,7 @@ class Queue:
 
 class Stack:
     def __init__(self) -> None:
-        self.data = []
+        self.data = deque()
 
     def push(self, value: Any) -> None:
         self.data.append(value)

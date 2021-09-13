@@ -210,7 +210,7 @@ class GhostRules:
     def check_death(state: GameState, agent_idx: int) -> None:
         pacman = state.get_pacman_position()
         if agent_idx == 0:
-            for idx in range(1, len(state.data.agent_states)):
+            for idx in range(1, state.get_num_agents()):
                 ghost_state = state.get_ghost_state(idx)
                 ghost = ghost_state.get_position()
 
