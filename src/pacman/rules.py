@@ -9,7 +9,6 @@ from ..consts.direction import Direction
 from ..utils.layout import Layout
 from ..utils.vector import Vector
 from ..utils.grid import Grid
-from ..utils.general import copy_interface
 
 
 @dataclass
@@ -50,9 +49,6 @@ class GameState:
 
         state.data._agent_moved = agent_idx
         state.data.score += state.data.score_change
-
-        if state.data.ghost_search is not None:
-            state.data.ghost_search.update(state)
         return state
 
     def is_lose(self) -> bool:
@@ -61,10 +57,8 @@ class GameState:
     def is_win(self) -> bool:
         return self.data._win
 
-    def initialize(
-        self, layout: Layout, ghost_search, num_ghost_agents: int
-    ) -> None:
-        self.data.initialize(layout, ghost_search, num_ghost_agents)
+    def initialize(self, layout: Layout, num_ghost_agents: int) -> None:
+        self.data.initialize(layout, num_ghost_agents)
 
     def get_pacman_state(self) -> AgentState:
         return self.data.agent_states[0]
@@ -92,6 +86,9 @@ class GameState:
     def get_ghost_position(self, idx: int) -> Position:
         return self.get_ghost_state(idx).get_position()
 
+    def get_food_sources(self) -> list[Position]:
+        return self.data.food.get_positions()
+
 
 class GameRules:
     def new_game(
@@ -100,12 +97,10 @@ class GameRules:
         pacman_agent: list[Agent],
         ghost_agents: list[Agent],
         display,
-        ghost_search=None,
     ) -> Game:
-        agents = [pacman_agent] + ghost_agents[: layout.get_num_ghosts()]
-        copy_interface(display.ui, GameState, ["keys_pressed", "keys_waiting"])
+        agents = [pacman_agent] + ghost_agents[: layout.num_ghosts]
         state = GameState()
-        state.initialize(layout, ghost_search, len(ghost_agents))
+        state.initialize(layout, len(ghost_agents))
         game = Game(agents, display, self)
         game.state = state
         return game

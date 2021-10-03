@@ -1,6 +1,10 @@
+import numpy as np
 import heapq
 from collections import deque
 from typing import Any, Union
+from dataclasses import dataclass
+
+from ..consts.types import Position, Cost
 
 
 class Queue:
@@ -44,3 +48,30 @@ class PriorityQueue:
 
     def is_empty(self) -> bool:
         return len(self.queue) == 0
+
+
+@dataclass(eq=False)
+class DistanceMemory:
+    dist: np.ndarray
+    mapping: dict[Position, int]
+
+    def get(self, start: Position, end: Position) -> Cost:
+        i_idx = self.mapping[end]
+        j_idx = self.mapping[start]
+        return self.dist[i_idx, j_idx]
+
+
+class IndexMap:
+    def __init__(self) -> None:
+        self.idx = 0
+        self.data = dict()
+
+    def __getitem__(self, position: Position) -> int:
+        idx = self.data.get(position, self.idx)
+        if idx == self.idx:
+            self.idx = idx + 1
+            self.data[position] = idx
+        return idx
+
+    def as_dict(self) -> dict[Position, int]:
+        return self.data

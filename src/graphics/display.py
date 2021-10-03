@@ -12,8 +12,7 @@ from ..pacman.game import AgentState, GameStateData
 
 
 class InfoPane:
-    def __init__(self, ui: UI, layout: Layout, grid_size: int):
-        self.ui = ui
+    def __init__(self, layout: Layout, grid_size: int):
         self.grid_size = grid_size
         self.base = (layout.height + 1) * grid_size
         self.font_size = 24
@@ -26,7 +25,7 @@ class InfoPane:
         return (shift + position).as_tuple()
 
     def draw_pane(self) -> None:
-        self.score_text = self.ui.text(
+        self.score_text = UI.text(
             self.to_screen((0, 0)),
             self.text_color,
             "SCORE:    0",
@@ -36,17 +35,11 @@ class InfoPane:
         )
 
     def update_score(self, score: int) -> None:
-        self.ui.change_text(self.score_text, "SCORE: % 4d" % score)
+        UI.change_text(self.score_text, "SCORE: % 4d" % score)
 
 
 class PacmanGraphics:
-    def __init__(
-        self,
-        ui: UI,
-        zoom: float = 1.0,
-        frame_time: float = 0.0,
-    ) -> None:
-        self.ui = ui
+    def __init__(self, zoom: float = 1.0, frame_time: float = 0.0) -> None:
         self.have_window = 0
         self.zoom = zoom
         self.grid_size = MainWindow.GRID_SIZE * zoom
@@ -62,14 +55,14 @@ class PacmanGraphics:
         self.width = self.layout.width
         self.height = self.layout.height
         self.__make_window(self.width, self.height)
-        self.info_pane = InfoPane(self.ui, self.layout, self.grid_size)
+        self.info_pane = InfoPane(self.layout, self.grid_size)
 
     def __draw_static_objects(self) -> None:
         layout = self.layout
         self.__draw_walls(layout.walls)
         self.food = self.__draw_food(layout.food)
         self.capsules = self.__draw_capsules(layout.capsules)
-        self.ui.refresh()
+        UI.refresh()
 
     def __draw_agents(self, state: GameState) -> None:
         self.agent_images = [
@@ -81,7 +74,7 @@ class PacmanGraphics:
             )
             for idx, agent in enumerate(state.agent_states)
         ]
-        self.ui.refresh()
+        UI.refresh()
 
     def update(self, new_state: GameStateData) -> None:
         agent_idx = new_state._agent_moved
@@ -98,9 +91,6 @@ class PacmanGraphics:
             self.__remove_capsules(new_state._capsule_eaten, self.capsules)
         if new_state._food_eaten is not None:
             self.__remove_food(new_state._food_eaten, self.food)
-
-        if new_state.ghost_search is not None:
-            self.__draw_path_to_ghosts(new_state)
         self.info_pane.update_score(new_state.score)
 
     def __make_window(self, width: int, height: int) -> None:
@@ -109,7 +99,7 @@ class PacmanGraphics:
         grid_height = self.grid_size * (height - 1)
         grid_width = self.grid_size * (width - 1)
 
-        self.ui.init_ui(
+        UI.init_ui(
             grid_width + offset,
             grid_height + offset + Info.HEIGHT,
             color=MainWindow.BACKGROUND_COLOR,
@@ -117,7 +107,7 @@ class PacmanGraphics:
         )
 
     def __draw_pacman(self, pacman: AgentState) -> list[int]:
-        body = self.ui.circle(
+        body = UI.circle(
             self.to_screen(self.__get_position(pacman)),
             Pacman.SCALE * self.grid_size,
             Pacman.COLOR,
@@ -152,8 +142,8 @@ class PacmanGraphics:
 
         radius = Pacman.SCALE * self.grid_size
 
-        self.ui.move_circle(image[0], screen, radius, endpoints)
-        self.ui.refresh()
+        UI.move_circle(image[0], screen, radius, endpoints)
+        UI.refresh()
 
     def __animate_pacman(
         self, pacman: AgentState, prev_pacman: AgentState, image: int
@@ -173,15 +163,15 @@ class PacmanGraphics:
                     self.__get_direction(pacman),
                     image,
                 )
-                self.ui.refresh()
-                self.ui.sleep(abs(self.frame_time) / frames)
+                UI.refresh()
+                UI.sleep(abs(self.frame_time) / frames)
         else:
             self.move_pacman(
                 self.__get_position(pacman),
                 self.__get_direction(pacman),
                 image,
             )
-        self.ui.refresh()
+        UI.refresh()
 
     def __get_ghost_color(self, ghost: AgentState, ghost_idx: int) -> int:
         if ghost.scared_timer > 0:
@@ -199,7 +189,7 @@ class PacmanGraphics:
             for x, y in Ghost.SHAPE
         ]
         colour = self.__get_ghost_color(ghost, agent_idx)
-        body = self.ui.polygon(coords, colour, filled=1)
+        body = UI.polygon(coords, colour, filled=1)
         return [body]
 
     def __move_ghost(
@@ -208,33 +198,12 @@ class PacmanGraphics:
         new_x, new_y = self.to_screen(self.__get_position(ghost))
 
         for image_part in image_parts:
-            self.ui.move_to(image_part, new_x, new_y)
-        self.ui.refresh()
+            UI.move_to(image_part, new_x, new_y)
+        UI.refresh()
 
         color = self.__get_ghost_color(ghost, ghost_idx)
-        self.ui.edit(image_parts[0], fill=color, outline=color)
-        self.ui.refresh()
-
-    def __draw_path_to_ghosts(self, state: GameStateData) -> None:
-        if hasattr(self, "ghost_paths"):
-            for path in self.ghost_paths:
-                self.ui.remove_from_screen(path)
-        ghost_paths = []
-
-        for idx, path in state.ghost_search.paths:
-            color = Ghost.COLORS[idx]
-
-            for node in path:
-                screen = self.to_screen(node)
-                image = self.ui.circle(
-                    screen,
-                    Path.SCALE * self.grid_size,
-                    color,
-                    style="arc",
-                    width=1,
-                )
-                ghost_paths.append(image)
-        self.ghost_paths = ghost_paths
+        UI.edit(image_parts[0], fill=color, outline=color)
+        UI.refresh()
 
     def __get_position(self, agent_state: AgentState) -> Vector:
         if agent_state.configuration is None:
@@ -247,7 +216,7 @@ class PacmanGraphics:
         return agent_state.get_direction()
 
     def finish(self) -> None:
-        self.ui.end_graphics()
+        UI.end_graphics()
 
     def to_screen(
         self, point: Union[Vector, tuple[float, float]]
@@ -275,7 +244,7 @@ class PacmanGraphics:
                         or south_is_wall
                     ):
                         end_shift = Vector(0, self.grid_size)
-                        self.ui.line(
+                        UI.line(
                             screen.as_tuple(),
                             (screen + end_shift).as_tuple(),
                             Wall.COLOR,
@@ -287,7 +256,7 @@ class PacmanGraphics:
                         or east_is_wall
                     ):
                         end_shift = Vector(self.grid_size, 0)
-                        self.ui.line(
+                        UI.line(
                             screen.as_tuple(),
                             (screen + end_shift).as_tuple(),
                             Wall.COLOR,
@@ -308,7 +277,7 @@ class PacmanGraphics:
             for y, cell in enumerate(row):
                 if cell:
                     screen = self.to_screen((x, y))
-                    point = self.ui.circle(
+                    point = UI.circle(
                         screen,
                         Food.SIZE * self.grid_size,
                         Food.COLOR,
@@ -324,7 +293,7 @@ class PacmanGraphics:
         capsule_images = {}
         for capsule in capsules:
             screen = self.to_screen(capsule)
-            point = self.ui.circle(
+            point = UI.circle(
                 screen,
                 Capsule.SIZE * self.grid_size,
                 Capsule.COLOR,
@@ -336,9 +305,9 @@ class PacmanGraphics:
 
     def __remove_food(self, cell: Vector, food_images: list[int]) -> None:
         x, y = cell
-        self.ui.remove_from_screen(food_images[x][y])
+        UI.remove_from_screen(food_images[x][y])
 
     def __remove_capsules(
         self, cell: Vector, capsuleImages: list[int]
     ) -> None:
-        self.ui.remove_from_screen(capsuleImages[cell])
+        UI.remove_from_screen(capsuleImages[cell])

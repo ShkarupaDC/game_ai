@@ -1,8 +1,9 @@
 import random
 
+from .game import Agent
+from ..graphics.ui import UI
 from ..consts.direction import Direction
 from ..consts.graphics import Key
-from .game import Agent
 
 
 class KeyboardAgent(Agent):
@@ -12,7 +13,7 @@ class KeyboardAgent(Agent):
         self.keys = []
 
     def get_action(self, state) -> str:
-        keys = set(state.keys_waiting() + state.keys_pressed())
+        keys = set(UI.keys_waiting() + UI.keys_pressed())
         if len(keys) > 0:
             self.keys = keys
 

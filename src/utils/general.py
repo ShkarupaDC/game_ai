@@ -1,5 +1,6 @@
 import time
 import random
+import numpy as np
 from functools import wraps
 from collections import Counter
 from typing import Any, Callable, Union
@@ -32,13 +33,6 @@ def color_to_vector(color: str) -> list[float]:
     return list(map(mapping, rgb))
 
 
-def copy_interface(parent: object, child: object, attrs: list[str]) -> object:
-    for name in attrs:
-        attribute = getattr(parent, name)
-        setattr(child, name, attribute)
-    return child
-
-
 def time_it(stdout: bool = False) -> Callable:
     def timer(function: Callable) -> Callable:
         @wraps(function)
@@ -56,5 +50,7 @@ def time_it(stdout: bool = False) -> Callable:
     return timer
 
 
-def bitwise_or(xs: list[bool], ys: list[bool]) -> list[bool]:
-    return [x or y for x, y in zip(xs, ys)]
+def get_empty_adj_matrix(size: int) -> np.ndarray:
+    adj_matrix = np.full((size, size), float("inf"))
+    np.fill_diagonal(adj_matrix, 0)
+    return adj_matrix

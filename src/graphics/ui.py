@@ -1,93 +1,95 @@
 import time
 import tkinter
-from typing import Optional, Callable
+from typing import Optional
 
 from ..consts.graphics import Color, Key
 
+DONT_WAIT = tkinter._tkinter.DONT_WAIT
+
 
 class UI:
-    def __init__(self) -> None:
-        self.master = None
-        self.keys_down = {}
-        self.keys_wait = {}
-        self.got_release = None
+    master = None
+    keys_down = {}
+    keys_wait = {}
+    got_release = None
 
+    @staticmethod
     def init_ui(
-        self,
         width: int = 640,
         height: int = 480,
         color: str = Color.BLACK,
         title: str = "Graphics Window",
     ) -> None:
-        if self.master is not None:
-            self.master.destroy()
+        if UI.master is not None:
+            UI.master.destroy()
 
-        self.canvas_ys = self.canvas_y = height - 1
-        self.canvas_xs = self.canvas_x = width - 1
+        UI.canvas_ys = UI.canvas_y = height - 1
+        UI.canvas_xs = UI.canvas_x = width - 1
 
-        self.master = tkinter.Tk()
-        self.master.protocol("WM_DELETE_WINDOW", exit)
-        self.master.title(title)
-        self.master.resizable(0, 0)
+        UI.master = tkinter.Tk()
+        UI.master.protocol("WM_DELETE_WINDOW", exit)
+        UI.master.title(title)
+        UI.master.resizable(0, 0)
 
-        self.bg_color = color
+        UI.bg_color = color
         try:
-            self.canvas = tkinter.Canvas(
-                self.master, width=width, height=height
-            )
-            self.canvas.pack()
-            self.draw_background()
-            self.canvas.update()
+            UI.canvas = tkinter.Canvas(UI.master, width=width, height=height)
+            UI.canvas.pack()
+            UI.draw_background()
+            UI.canvas.update()
         except:
             raise Exception("Can not create canvas to draw on")
 
-        self.master.bind("<KeyPress>", self.__key_press)
-        self.master.bind("<KeyRelease>", self.__key_release)
-        self.__clear_keys()
+        UI.master.bind("<KeyPress>", UI.__key_press)
+        UI.master.bind("<KeyRelease>", UI.__key_release)
+        UI.__clear_keys()
 
-    def draw_background(self) -> None:
+    @staticmethod
+    def draw_background() -> None:
         corners = [
             (0, 0),
-            (0, self.canvas_ys),
-            (self.canvas_xs, self.canvas_ys),
-            (self.canvas_xs, 0),
+            (0, UI.canvas_ys),
+            (UI.canvas_xs, UI.canvas_ys),
+            (UI.canvas_xs, 0),
         ]
-        self.polygon(
+        UI.polygon(
             corners,
-            self.bg_color,
-            fill_color=self.bg_color,
+            UI.bg_color,
+            fill_color=UI.bg_color,
             filled=True,
             smoothed=False,
         )
 
-    def refresh(self) -> None:
-        self.canvas.update_idletasks()
+    @staticmethod
+    def refresh() -> None:
+        UI.canvas.update_idletasks()
 
-    def sleep(self, seconds: int) -> None:
-        if self.master is None:
+    @staticmethod
+    def sleep(seconds: int) -> None:
+        if UI.master is None:
             time.sleep(seconds)
         else:
-            self.master.update_idletasks()
+            UI.master.update_idletasks()
             pause_time = int(1e3 * seconds)
-            self.master.after(pause_time, self.master.quit)
-            self.master.mainloop()
+            UI.master.after(pause_time, UI.master.quit)
+            UI.master.mainloop()
 
-    def end_graphics(self) -> None:
+    @staticmethod
+    def end_graphics() -> None:
         try:
-            self.sleep(seconds=1)
-            if self.master is not None:
-                self.master.destroy()
+            UI.sleep(seconds=1)
+            if UI.master is not None:
+                UI.master.destroy()
         finally:
-            self.master = None
-            self.canvas = None
-            self.mouse_enabled = 0
-            self.__clear_keys()
+            UI.master = None
+            UI.canvas = None
+            UI.__clear_keys()
 
-    def edit(self, id: int, **kwargs):
-        self.canvas.itemconfigure(id, **kwargs)
+    @staticmethod
+    def edit(id: int, **kwargs):
+        UI.canvas.itemconfigure(id, **kwargs)
 
     def polygon(
-        self,
         coords: list[tuple[float, float]],
         outline_color: str,
         fill_color: Optional[str] = None,
@@ -101,7 +103,7 @@ class UI:
             fill_color = outline_color
         if filled == 0:
             fill_color = ""
-        polygon = self.canvas.create_polygon(
+        polygon = UI.canvas.create_polygon(
             coord_list,
             outline=outline_color,
             fill=fill_color,
@@ -109,11 +111,11 @@ class UI:
             width=width,
         )
         if behind > 0:
-            self.canvas.tag_lower(polygon, behind)
+            UI.canvas.tag_lower(polygon, behind)
         return polygon
 
+    @staticmethod
     def circle(
-        self,
         position: tuple[float, float],
         radius: int,
         outline_color: str,
@@ -134,7 +136,7 @@ class UI:
 
         while end_x > end_y:
             end_y += 360
-        return self.canvas.create_arc(
+        return UI.canvas.create_arc(
             x1,
             y1,
             x2,
@@ -147,8 +149,8 @@ class UI:
             width=width,
         )
 
+    @staticmethod
     def move_circle(
-        self,
         id: int,
         position: tuple[float, float],
         radius: int,
@@ -166,94 +168,73 @@ class UI:
         while end_x > end_y:
             end_y += 360
 
-        self.edit(id, start=end_x, extent=end_y - end_x)
-        self.move_to(id, x1, y1)
+        UI.edit(id, start=end_x, extent=end_y - end_x)
+        UI.move_to(id, x1, y1)
 
+    @staticmethod
     def line(
-        self,
         start: tuple[float, float],
         end: tuple[float, float],
         color: str = Color.BLACK,
         width: int = 2,
     ) -> int:
-        return self.canvas.create_line(*start, *end, fill=color, width=width)
+        return UI.canvas.create_line(*start, *end, fill=color, width=width)
 
-    def remove_from_screen(
-        self,
-        x: float,
-        fn: Optional[Callable] = None,
-        param: int = tkinter._tkinter.DONT_WAIT,
-    ) -> None:
-        self.canvas.delete(x)
-        if fn is None:
-            fn = lambda arg: self.master.dooneevent(arg)
-        fn(param)
+    @staticmethod
+    def remove_from_screen(x: int) -> None:
+        UI.canvas.delete(x)
+        UI.master.dooneevent(DONT_WAIT)
 
-    def move_to(
-        self,
-        object,
-        x: float,
-        y: Optional[float] = None,
-        fn: Optional[Callable] = None,
-        param: int = tkinter._tkinter.DONT_WAIT,
-    ) -> None:
-        if y is None:
-            try:
-                x, y = x
-            except:
-                raise Exception("Invalid coordinates")
-
+    @staticmethod
+    def move_to(object, x: float, y: Optional[float] = None) -> None:
         new_coords = []
-        current_x, current_y = self.canvas.coords(object)[0:2]
+        current_x, current_y = UI.canvas.coords(object)[0:2]
         horizontal = True
 
-        for coord in self.canvas.coords(object):
+        for coord in UI.canvas.coords(object):
             add = x - current_x if horizontal else y - current_y
             horizontal = not horizontal
             new_coords.append(coord + add)
 
-        self.canvas.coords(object, *new_coords)
-        if fn is None:
-            fn = lambda arg: self.master.dooneevent(arg)
-        fn(param)
+        UI.canvas.coords(object, *new_coords)
+        UI.master.dooneevent(DONT_WAIT)
 
-    def __key_press(self, event: tkinter.Event) -> None:
-        self.keys_down[event.keysym] = 1
+    @staticmethod
+    def __key_press(event: tkinter.Event) -> None:
+        UI.keys_down[event.keysym] = 1
         if event.keysym in Key.control_keys():
-            self.keys_wait[event.keysym] = 1
-        self.got_release = None
+            UI.keys_wait[event.keysym] = 1
+        UI.got_release = None
 
-    def __key_release(self, event: tkinter.Event) -> None:
+    @staticmethod
+    def __key_release(event: tkinter.Event) -> None:
         try:
-            del self.keys_down[event.keysym]
+            del UI.keys_down[event.keysym]
         except:
             pass
-        self.got_release = 1
+        UI.got_release = 1
 
-    def __clear_keys(self, event: Optional[tkinter.Event] = None) -> None:
-        self.keys_down = {}
-        self.keys_wait = {}
-        self.got_release = None
+    @staticmethod
+    def __clear_keys(event: Optional[tkinter.Event] = None) -> None:
+        UI.keys_down = {}
+        UI.keys_wait = {}
+        UI.got_release = None
 
-    def keys_pressed(
-        self,
-        fn: Optional[Callable] = None,
-        param: int = tkinter._tkinter.DONT_WAIT,
-    ) -> list[str]:
-        if fn is None:
-            fn = lambda arg: self.master.dooneevent(arg)
-        fn(param)
-        if self.got_release != 0:
-            fn(param)
-        return list(self.keys_down.keys())
+    @staticmethod
+    def keys_pressed() -> list[str]:
+        UI.master.dooneevent(DONT_WAIT)
+        if UI.got_release != 0:
+            UI.master.dooneevent(DONT_WAIT)
+        return list(UI.keys_down.keys())
 
-    def keys_waiting(self) -> list[str]:
-        keys = list(self.keys_wait.keys())
-        self.keys_wait = {}
+    @staticmethod
+    def keys_waiting() -> list[str]:
+        keys = list(UI.keys_wait.keys())
+        UI.keys_wait = {}
         return keys
 
+    @staticmethod
     def text(
-        self,
         position: tuple[float, float],
         color: str,
         contents: str,
@@ -262,20 +243,22 @@ class UI:
         style: str = "normal",
         anchor: str = "nw",
     ) -> int:
-        x, y = position
-        font = (font, str(size), style)
-        return self.canvas.create_text(
-            x, y, fill=color, text=contents, font=font, anchor=anchor
+        return UI.canvas.create_text(
+            *position,
+            fill=color,
+            text=contents,
+            font=(font, str(size), style),
+            anchor=anchor
         )
 
+    @staticmethod
     def change_text(
-        self,
         id: int,
         new_text: str,
         font: Optional[str] = None,
         size: int = 12,
         style: str = "normal",
     ):
-        self.canvas.itemconfigure(id, text=new_text)
+        UI.canvas.itemconfigure(id, text=new_text)
         if font is not None:
-            self.canvas.itemconfigure(id, font=(font, "-%d" % size, style))
+            UI.canvas.itemconfigure(id, font=(font, "-%d" % size, style))

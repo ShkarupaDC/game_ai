@@ -20,7 +20,6 @@ class GameStateData:
 
     def __post_init__(self, state: Optional["GameStateData"] = None) -> None:
         if state is not None:
-            self.ghost_search = copy.deepcopy(state.ghost_search)
             self.food = copy.deepcopy(state.food)
             self.capsules = state.capsules[:]
             self.agent_states = copy.deepcopy(state.agent_states)
@@ -28,10 +27,7 @@ class GameStateData:
             self._eaten = state._eaten
             self.score = state.score
 
-    def initialize(
-        self, layout: Layout, ghost_search, num_ghost_agents: int
-    ) -> None:
-        self.ghost_search = copy.deepcopy(ghost_search)
+    def initialize(self, layout: Layout, num_ghost_agents: int) -> None:
         self.food = copy.deepcopy(layout.food)
         self.capsules = layout.capsules[:]
         self.layout = layout
@@ -64,6 +60,10 @@ class Game:
     def run(self) -> None:
         self.display.init(self.state.data)
         self.num_moves = 0
+
+        for agent in self.agents:
+            if hasattr(agent, "register_state"):
+                agent.register_state(self.state)
 
         agent_idx = 0
         num_agents = len(self.agents)

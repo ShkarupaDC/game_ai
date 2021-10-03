@@ -1,65 +1,108 @@
 import numpy as np
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
+from dataclasses import InitVar, dataclass, field
 
 from .grid import Grid
-from ..utils.vector import Vector
+from ..consts.types import Position, TextMaze
 
 
+@dataclass(eq=False)
 class Layout:
-    def __init__(self, maze: list[list[str]]) -> None:
-        self.maze = np.array(maze)
-        self.height, self.width = self.maze.shape
-        self.walls = Grid(self.width, self.height)
-        self.food = Grid(self.width, self.height)
-        self.capsules = []
-        self.agent_positions = []
-        self.num_ghosts = 0
-        self.__process_maze()
-        self.total_food = self.food.count()
+    height: int
+    width: int
+    walls: InitVar[Optional[Grid]] = None
+    food: InitVar[Optional[Grid]] = None
+    capsules: list[Position] = field(default_factory=list)
+    agent_positions: list[tuple[bool, Position]] = field(default_factory=list)
+    num_ghosts: int = 0
 
-    def get_num_ghosts(self) -> int:
-        return self.num_ghosts
-
-    def __process_maze(self) -> None:
-        for y in range(self.height):
-            for x in range(self.width):
-                value = self.maze[self.height - (y + 1)][x]
-                position = Vector(x, y)
-                self.__process_point(position, value)
-
-    def __process_point(self, position: Vector, value: str) -> None:
-        x, y = position
-        if value == "#":
-            self.walls[x][y] = True
-        elif value == ".":
-            self.food[x][y] = True
-        elif value == "o":
-            self.capsules.append(position)
-        elif value == "P":
-            self.agent_positions.append((True, position))
-        elif value in ["1", "2", "3", "4"]:
-            self.num_ghosts += 1
-            self.agent_positions.append((False, position))
+    def __post_init__(
+        self, food: Optional[Grid], walls: Optional[Grid]
+    ) -> None:
+        self.food = (
+            food
+            if self.food is not None
+            else Grid.full(self.width, self.height)
+        )
+        self.walls = (
+            walls
+            if self.walls is not None
+            else Grid.full(self.width, self.height)
+        )
 
     @staticmethod
-    def get_layout(name: str, layout_dir: str = "assets/layouts") -> "Layout":
-        layout_dir = Path(layout_dir)
-        name = name if name.endswith(".lay") else f"{name}.lay"
-        layout = Layout.load_layout(layout_dir / name)
+    def from_text(name: str, maze_dir: str = "assets/layouts") -> "Layout":
+        layout = MazeParser.parse(name, maze_dir)
         return layout
 
     @staticmethod
-    def load_layout(path: Union[str, Path]) -> Optional["Layout"]:
+    def generate(*maze_args: Any, **maze_kwargs: Any) -> "Layout":
+        layout = MazeGenerator.generate(*maze_args, **maze_kwargs)
+        return layout
+
+
+class MazeParser:
+    @staticmethod
+    def parse(name: str, maze_dir: str) -> Layout:
+        maze = MazeParser.__get_maze(name, maze_dir)
+        height, width = maze.shape
+        layout = Layout(height, width)
+        MazeParser.__process_maze(maze, layout)
+        return layout
+
+    @staticmethod
+    def __process_maze(maze: TextMaze, layout: Layout) -> None:
+        for y in range(layout.height):
+            for x in range(layout.width):
+                value = maze[layout.height - (y + 1)][x]
+                position = Position(x, y)
+                MazeParser.__process_point(layout, position, value)
+
+    @staticmethod
+    def __process_point(
+        layout: Layout, position: Position, value: str
+    ) -> None:
+        x, y = position
+        if value == "#":
+            layout.walls[x][y] = True
+        elif value == ".":
+            layout.food[x][y] = True
+        elif value == "o":
+            layout.capsules.append(position)
+        elif value == "P":
+            layout.agent_positions.append((True, position))
+        elif value in ["1", "2", "3", "4"]:
+            layout.num_ghosts += 1
+            layout.agent_positions.append((False, position))
+
+    @staticmethod
+    def __get_maze(name: str, maze_dir: str) -> Optional[TextMaze]:
+        maze_dir = Path(maze_dir)
+        name = name if name.endswith(".lay") else f"{name}.lay"
+        maze = MazeParser.__load_maze(maze_dir / name)
+        return maze
+
+    @staticmethod
+    def __load_maze(path: Union[str, Path]) -> Optional[TextMaze]:
         if not Path(path).exists():
             return None
         try:
             with open(path, mode="r") as file:
-                maze = [list(line.strip()) for line in file]
-            return Layout(maze)
+                return np.array([list(line.strip()) for line in file])
         except:
             return None
 
+
+class MazeGenerator:
     @staticmethod
-    def generate_layout() -> "Layout":
-        pass
+    def generate(
+        height: int,
+        width: int,
+        nethod: str,
+        num_ghosts: int,
+        num_food: int,
+        num_capsules: int,
+    ) -> Layout:
+        layout = Layout(height, width)
+        return layout
