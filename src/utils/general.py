@@ -56,5 +56,5 @@ def get_empty_adj_matrix(size: int) -> np.ndarray:
     return adj_matrix
 
 
-def nearest_even(value: int) -> int:
-    return value if value % 2 == 0 else value + 1
+def nearest_odd(value: int) -> int:
+    return value + 1 if value % 2 == 0 else value

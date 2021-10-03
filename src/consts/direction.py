@@ -29,9 +29,9 @@ TO_VECTOR = {
     Direction.STOP: Vector(0, 0),
 }
 
-MAZE_MOVES = [
-    Vector(-2, 0),
-    Vector(2, 0),
-    Vector(0, -2),
-    Vector(0, 2),
-]
+
+class MazeMove:
+    LEFT = Vector(-2, 0)
+    RIGTH = Vector(2, 0)
+    UP = Vector(0, 2)
+    DOWN = Vector(0, -2)

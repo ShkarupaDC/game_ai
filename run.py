@@ -47,7 +47,9 @@ def parse_args():
     )
     options = parser.parse_args()
 
-    layout = Layout.generate(height=32, width=32, num_food=10)
+    layout = Layout.generate(
+        height=32, width=32, num_food=10, num_capsules=2, num_ghosts=1
+    )
     if layout is None:
         raise Exception(f"The layout {options.layout} cannot be found")
     args = {"layout": layout}
