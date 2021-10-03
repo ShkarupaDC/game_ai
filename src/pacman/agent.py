@@ -62,7 +62,7 @@ class Actions:
             return [config.get_direction()]
 
         actions = []
-        for direction, vector in DIRECTION_TO_VECTOR.items():
+        for direction, vector in TO_VECTOR.items():
             x, y = (xy_int + vector).as_tuple()
             if not walls[x][y]:
                 actions.append(direction)
@@ -88,4 +88,4 @@ class Actions:
 
     @staticmethod
     def direction_to_vector(direction: int, speed: float = 1.0) -> Vector:
-        return DIRECTION_TO_VECTOR[direction] * speed
+        return TO_VECTOR[direction] * speed

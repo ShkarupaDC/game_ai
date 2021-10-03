@@ -21,10 +21,17 @@ class Direction:
         return directions
 
 
-DIRECTION_TO_VECTOR = {
+TO_VECTOR = {
     Direction.NORTH: Vector(0, 1),
     Direction.SOUTH: Vector(0, -1),
     Direction.EAST: Vector(1, 0),
     Direction.WEST: Vector(-1, 0),
     Direction.STOP: Vector(0, 0),
 }
+
+MAZE_MOVES = [
+    Vector(-2, 0),
+    Vector(2, 0),
+    Vector(0, -2),
+    Vector(0, 2),
+]

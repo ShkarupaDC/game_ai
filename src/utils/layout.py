@@ -1,10 +1,13 @@
 import numpy as np
+import random
 from pathlib import Path
 from typing import Any, Optional, Union
 from dataclasses import InitVar, dataclass, field
 
 from .grid import Grid
+from .general import nearest_even
 from ..consts.types import Position, TextMaze
+from ..consts.direction import MAZE_MOVES
 
 
 @dataclass(eq=False)
@@ -99,10 +102,82 @@ class MazeGenerator:
     def generate(
         height: int,
         width: int,
-        nethod: str,
-        num_ghosts: int,
         num_food: int,
-        num_capsules: int,
+        num_capsules: int = 0,
+        num_ghosts: int = 0,
     ) -> Layout:
-        layout = Layout(height, width)
+        layout = Layout(
+            width=nearest_even(width),
+            height=nearest_even(height),
+            num_ghosts=num_ghosts,
+        )
+        MazeGenerator.__fill_layout(layout, num_food, num_capsules)
         return layout
+
+    def __generate_walls(layout: Layout, backtrack_prob: float = 1.0) -> None:
+        height, width = layout.height, layout.width
+
+        walls = np.ones((height, width), dtype=bool)
+        current = Position(
+            random.randrange(1, width, 2),
+            random.randrange(1, height, 2),
+        )
+        walls[current.y, current.x] = False
+        active = [current]
+        while active:
+            if random.random() < backtrack_prob:
+                current = active[-1]
+            else:
+                current = random.choice(active)
+
+            neighbors = MazeGenerator.__get_neighbors(current, walls)
+            if not neighbors:
+                active.remove(current)
+                continue
+            next = random.choice(neighbors)
+            active.append(next)
+
+            center = (current + next) // 2
+            walls[next.y, next.x] = 0
+            walls[center.y, center.x] = 0
+
+        layout.walls = Grid(walls.T[::-1, :])
+
+    def __get_neighbors(
+        current: Position, walls: np.ndarray
+    ) -> list[Position]:
+        height, width = walls.shape
+        neighbors = []
+        for move in MAZE_MOVES:
+            next = current + move
+            if (
+                next.x > 1
+                and next.x < width - 2
+                and next.y > 1
+                and next.y < height - 2
+                and walls[next.y, next.x]
+            ):
+                neighbors.append(next)
+        return neighbors
+
+    def __fill_layout(layout: Layout, food: int, capsules: int) -> None:
+        MazeGenerator.__generate_walls(layout)
+        print("OK")
+        free_space = layout.walls.invert()
+
+        free = free_space.get_positions()
+        agents = layout.num_ghosts + 1
+        fill = agents + capsules + food
+        if fill > len(free):
+            raise Exception("Not enough space")
+
+        chosen = random.choices(free, k=fill)
+        for xx, yy in chosen[-food:]:
+            layout.food[xx][yy] = True
+
+        pacman_idx = random.randint(0, agents - 1)
+        layout.agent_positions = [
+            [idx == pacman_idx, position]
+            for idx, position in enumerate(chosen[:agents])
+        ]
+        layout.capsules = chosen[agents : agents + capsules]

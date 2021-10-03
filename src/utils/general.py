@@ -54,3 +54,7 @@ def get_empty_adj_matrix(size: int) -> np.ndarray:
     adj_matrix = np.full((size, size), float("inf"))
     np.fill_diagonal(adj_matrix, 0)
     return adj_matrix
+
+
+def nearest_even(value: int) -> int:
+    return value if value % 2 == 0 else value + 1

@@ -39,6 +39,17 @@ class Vector:
             self.y + other.y,
         )
 
+    def __floordiv__(self, value: Union[int, float]) -> "Vector":
+        return (self / value).as_int()
+
+    def __truediv__(self, value: Union[int, float]) -> "Vector":
+        if value == 0:
+            raise Exception("Division by zero")
+        return Vector(
+            self.x / value,
+            self.y / value,
+        )
+
     def __mul__(self, scalar: Union[int, float]) -> "Vector":
         return Vector(
             self.x * scalar,
