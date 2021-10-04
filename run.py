@@ -17,7 +17,6 @@ def parse_args():
         "-l",
         "--layout",
         help="file from which to load the map layout",
-        default="medium",
     )
     parser.add_argument(
         "-g",
@@ -47,14 +46,18 @@ def parse_args():
     )
     options = parser.parse_args()
 
-    layout = Layout.generate(
-        height=32, width=32, num_food=10, num_capsules=2, num_ghosts=1
+    layout = (
+        Layout.from_text(options.layout)
+        if options.layout is not None
+        else Layout.generate(
+            height=32, width=32, num_food=10, num_capsules=2, num_ghosts=1
+        )
     )
     if layout is None:
         raise Exception(f"The layout {options.layout} cannot be found")
     args = {"layout": layout}
 
-    args["pacman_agent"] = AllFoodAgent()
+    args["pacman_agent"] = AllFoodAgent()  # KeyboardAgent(), FourPointAgent()
     args["ghost_agents"] = [
         RandomGhost(idx + 1) for idx in range(options.num_ghosts)
     ]

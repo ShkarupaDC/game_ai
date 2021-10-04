@@ -3,9 +3,12 @@ from dataclasses import dataclass
 from ...consts.types import Position
 
 
-@dataclass(eq=True, unsafe_hash=True, frozen=True)
+@dataclass(unsafe_hash=True, frozen=True)
 class SearchState:
     position: Position
+
+    def __lt__(self, other: "SearchState") -> bool:
+        return self.position < other.position
 
 
 @dataclass(unsafe_hash=True, frozen=True)

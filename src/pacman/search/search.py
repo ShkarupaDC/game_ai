@@ -1,13 +1,13 @@
 import numpy as np
 from collections import defaultdict
-from typing import Optional, Type
+from typing import Optional, Type, Any
 
 from .states import SearchState, FourPointState, AllFoodState
 from .cost_fns import CostFn, UniformCostFn
 from ..agent import Actions
 from ...consts.direction import Direction
 from ...consts.types import AdjList, Position, Cost, Action
-from ...utils.data_structures import Queue, IndexMap
+from ...utils.data_structures import Queue, IndexDict
 from ...utils.general import get_empty_adj_matrix
 
 Neighbor = tuple[SearchState, Action, Cost]
@@ -18,10 +18,11 @@ class SearchProblem:
         self,
         game_state,
         cost_fn: Type[CostFn] = UniformCostFn,
+        **cost_kwargs: Any,
     ) -> None:
         self.history = {}
         self.walls = game_state.get_walls()
-        self.cost_fn = cost_fn(game_state)
+        self.cost_fn = cost_fn(game_state, **cost_kwargs)
 
     def get_neighbor(
         self, state: SearchState, position: Position, action: Action
@@ -50,7 +51,7 @@ class SearchProblem:
         visited, queue = set(), Queue()
         queue.push(start)
         adj_list = defaultdict(list)
-        mapping = IndexMap()
+        mapping = IndexDict()
 
         while not queue.is_empty():
             parent = queue.pop()
@@ -81,14 +82,44 @@ class SearchProblem:
         return self.cost_fn.get_min_cost()
 
 
+class PositionPoblem(SearchProblem):
+    def __init__(
+        self,
+        game_state,
+        goal: Position,
+        cost_fn: Type[CostFn] = UniformCostFn,
+        **cost_kwargs: Any,
+    ) -> None:
+        super().__init__(game_state, cost_fn, **cost_kwargs)
+        self.goal = goal
+        self.start = SearchState(game_state.get_pacman_position())
+
+    def is_goal(self, state: SearchState) -> bool:
+        return state.position == self.goal
+
+    def get_start(self) -> Position:
+        return self.start
+
+    def get_neighbor(
+        self, state: SearchState, position: Position, action: Action
+    ) -> Neighbor:
+        next_state = SearchState(position)
+        cost = self.cost_fn(next_state)
+        return next_state, action, cost
+
+    def get_goal(self) -> Position:
+        return self.goal
+
+
 class FourPointProblem(SearchProblem):
     def __init__(
         self,
         game_state,
         points: Optional[list[Position]] = None,
         cost_fn: Type[CostFn] = UniformCostFn,
+        **cost_kwargs: Any,
     ) -> None:
-        super().__init__(game_state, cost_fn)
+        super().__init__(game_state, cost_fn, **cost_kwargs)
         self.start = FourPointState(
             game_state.get_pacman_position(),
         )
@@ -112,9 +143,9 @@ class FourPointProblem(SearchProblem):
             bit_mask = point_mask | state.bit_mask
         else:
             bit_mask = state.bit_mask
-        cost = self.cost_fn(state)
-
         next_state = FourPointState(position, bit_mask)
+
+        cost = self.cost_fn(next_state)
         return next_state, action, cost
 
     def get_points(self) -> list[Position]:
@@ -126,11 +157,12 @@ class AllFoodProblem(SearchProblem):
         self,
         game_state,
         cost_fn: Type[CostFn] = UniformCostFn,
+        **cost_kwargs: Any,
     ) -> None:
-        super().__init__(game_state, cost_fn)
-        food = game_state.get_food_sources()
+        super().__init__(game_state, cost_fn, **cost_kwargs)
+        self.food = game_state.get_food_sources()
         self.start = AllFoodState(
-            game_state.get_pacman_position(), frozenset(food)
+            game_state.get_pacman_position(), frozenset(self.food)
         )
 
     def get_start(self) -> AllFoodState:
@@ -148,5 +180,8 @@ class AllFoodProblem(SearchProblem):
             else state.rest
         )
         next_state = AllFoodState(position, rest)
-        cost = self.cost_fn(state)
+        cost = self.cost_fn(next_state)
         return next_state, action, cost
+
+    def get_food(self) -> list[Position]:
+        return self.food

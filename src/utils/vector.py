@@ -28,7 +28,12 @@ class Vector:
         return Vector(int(self.x), int(self.y))
 
     def manhattan(self, other: "Vector") -> float:
-        return abs(self.x - other.x) + abs(self.y - other.y)
+        dx, dy = abs(self - other)
+        return dx + dy
+
+    def chebyshev(self, other: "Vector") -> float:
+        dx, dy = abs(self - other)
+        return min(dx, dy)
 
     def nearest(self) -> "Vector":
         return self.as_int(up=True)
@@ -37,6 +42,18 @@ class Vector:
         return Vector(
             self.x + other.x,
             self.y + other.y,
+        )
+
+    def __sub__(self, other: "Vector") -> "Vector":
+        return Vector(
+            self.x - other.x,
+            self.y - other.y,
+        )
+
+    def __mul__(self, scalar: Union[int, float]) -> "Vector":
+        return Vector(
+            self.x * scalar,
+            self.y * scalar,
         )
 
     def __floordiv__(self, value: Union[int, float]) -> "Vector":
@@ -50,10 +67,10 @@ class Vector:
             self.y / value,
         )
 
-    def __mul__(self, scalar: Union[int, float]) -> "Vector":
+    def __abs__(self) -> "Vector":
         return Vector(
-            self.x * scalar,
-            self.y * scalar,
+            abs(self.x),
+            abs(self.y),
         )
 
     def __eq__(self, other: "Vector") -> bool:

@@ -1,6 +1,6 @@
 from functools import partial
 import inspect
-from typing import Callable, Optional, Type
+from typing import Callable, Optional, Type, Any
 
 from .search import SearchProblem, FourPointProblem, AllFoodProblem
 from .heuristics import four_point_heuristic, all_food_heuristic
@@ -15,13 +15,15 @@ class SearchAgent(Agent):
         search_fn: Callable,
         problem_type: Type[SearchProblem],
         heuristic: Optional[Callable] = None,
+        **problem_kwargs: Any,
     ) -> None:
+        self.problem_type = problem_type
         arg_names = inspect.getargs(heuristic)[0]
         if "heuristic" in arg_names:
             self.search_fn = partial(search_fn, heuristic=heuristic)
         else:
             self.search_fn = search_fn
-        self.problem_type = problem_type
+        self.problem_kwargs = problem_kwargs
 
     def get_action(self, game_state) -> int:
         if self.action_idx >= len(self.actions):
@@ -31,7 +33,10 @@ class SearchAgent(Agent):
         return self.actions[idx]
 
     def register_state(self, game_state) -> None:
-        problem = self.problem_type(game_state)
+        problem = self.problem_type(
+            game_state,
+            **(self.problem_kwargs if hasattr(self, "problem_kwargs") else {}),
+        )
         self.action_idx = 0
         self.actions = self.search_fn(problem)
 

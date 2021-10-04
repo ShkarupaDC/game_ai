@@ -43,8 +43,12 @@ class Layout:
         return layout
 
     @staticmethod
-    def generate(*maze_args: Any, **maze_kwargs: Any) -> "Layout":
+    def generate(
+        save_path: Optional[str] = None, *maze_args: Any, **maze_kwargs: Any
+    ) -> "Layout":
         layout = MazeGenerator.generate(*maze_args, **maze_kwargs)
+        if save_path is not None:
+            layout.save(save_path)
         return layout
 
 
@@ -117,7 +121,7 @@ class MazeGenerator:
         MazeGenerator.__fill_layout(layout, num_food, num_capsules)
         return layout
 
-    def __generate_walls(layout: Layout, backtrack_prob: float = 1.0) -> None:
+    def __generate_walls(layout: Layout, backtrack_prob: float = 0.5) -> None:
         height, width = layout.height, layout.width
 
         walls = np.ones((height, width), dtype=bool)

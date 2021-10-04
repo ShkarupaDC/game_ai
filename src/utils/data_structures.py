@@ -54,14 +54,15 @@ class PriorityQueue:
 class DistanceMemory:
     dist: np.ndarray
     mapping: dict[Position, int]
+    goal_idxs: dict[int, int]
 
     def get(self, start: Position, end: Position) -> Cost:
-        i_idx = self.mapping[end]
+        i_idx = self.goal_idxs[self.mapping[end]]
         j_idx = self.mapping[start]
         return self.dist[i_idx, j_idx]
 
 
-class IndexMap:
+class IndexDict:
     def __init__(self) -> None:
         self.idx = 0
         self.data = dict()
