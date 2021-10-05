@@ -16,13 +16,14 @@ def bfs(problem) -> list[Action]:
 
     while not queue.is_empty():
         parent, actions = queue.pop()
+        visited.add(parent)
         if problem.is_goal(parent):
             return actions
         for state, action, _ in problem.get_neighbors(parent):
-            if state not in visited:
-                new_actions = actions + [action]
-                visited.add(state)
-                queue.push((state, new_actions))
+            if state in visited:
+                continue
+            new_actions = actions + [action]
+            queue.push((state, new_actions))
 
     return []
 
@@ -37,13 +38,14 @@ def dfs(problem) -> list[Action]:
 
     while not stack.is_empty():
         parent, actions = stack.pop()
+        visited.add(parent)
         if problem.is_goal(parent):
             return actions
         for state, action, _ in problem.get_neighbors(parent):
-            if state not in visited:
-                new_actions = actions + [action]
-                stack.push((state, new_actions))
-                visited.add(state)
+            if state in visited:
+                continue
+            new_actions = actions + [action]
+            stack.push((state, new_actions))
 
     return []
 
@@ -85,6 +87,7 @@ def a_star(problem, heuristic: Callable) -> list[Action]:
 
     while not queue.is_empty():
         (parent, actions), _ = queue.pop()
+        visited.add(parent)
         cost = costs[parent]
         if problem.is_goal(parent):
             return actions
