@@ -1,10 +1,10 @@
 import numpy as np
 import heapq
 from collections import deque
-from typing import Any, Union
+from typing import Any, Optional, Union
 from dataclasses import dataclass
 
-from ..consts.types import Position, Cost
+from ..consts.types import PosToIdx, Position, Cost
 
 
 class Queue:
@@ -51,28 +51,14 @@ class PriorityQueue:
 
 
 @dataclass(eq=False)
-class DistanceMemory:
-    dist: np.ndarray
-    mapping: dict[Position, int]
-    goal_idxs: dict[int, int]
+class MazeDistance:
+    maze_dists: np.ndarray
+    mapping: PosToIdx
+    goal_mapping: Optional[dict[int, int]]
 
     def get(self, start: Position, end: Position) -> Cost:
-        i_idx = self.goal_idxs[self.mapping[end]]
-        j_idx = self.mapping[start]
-        return self.dist[i_idx, j_idx]
-
-
-class IndexDict:
-    def __init__(self) -> None:
-        self.idx = 0
-        self.data = dict()
-
-    def __getitem__(self, position: Position) -> int:
-        idx = self.data.get(position, self.idx)
-        if idx == self.idx:
-            self.idx = idx + 1
-            self.data[position] = idx
-        return idx
-
-    def as_dict(self) -> dict[Position, int]:
-        return self.data
+        end = self.mapping[end]
+        if self.goal_mapping is not None:
+            end = self.goal_mapping[end]
+        start = self.mapping[start]
+        return self.maze_dists[end, start]

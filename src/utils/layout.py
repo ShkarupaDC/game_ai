@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Optional, Union
 from dataclasses import InitVar, dataclass, field
 
-from .grid import Grid
+from .grid import Grid, Walls
 from .general import nearest_odd
 from ..consts.types import Position, TextMaze
 from ..consts.direction import MazeMove
@@ -31,7 +31,7 @@ class Layout:
         self.walls = (
             walls
             if self.walls is not None
-            else Grid.full(self.width, self.height)
+            else Walls.full(self.width, self.height)
         )
 
     def save(self, path: str) -> None:
@@ -148,7 +148,7 @@ class MazeGenerator:
             walls[next.y, next.x] = False
             walls[center.y, center.x] = False
 
-        layout.walls = Grid(walls.T[::-1, :])
+        layout.walls = Walls(walls.T[::-1, :])
 
     def __get_neighbors(
         current: Position, walls: np.ndarray

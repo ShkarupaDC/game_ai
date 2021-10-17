@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from ..consts.direction import *
+from ..consts.direction import Direction, TO_VECTOR
+from ..consts.types import Action
 from ..utils.grid import Grid
 from ..utils.vector import Vector
 
@@ -10,8 +11,11 @@ class Agent:
     def __init__(self, index: int = 0) -> None:
         self.index = index
 
-    def get_action(self, state) -> int:
+    def get_action(self, state) -> Action:
         raise NotImplementedError
+
+    def get_algo(self) -> Optional[str]:
+        return None
 
 
 @dataclass(eq=False)
@@ -63,7 +67,7 @@ class Actions:
 
         actions = []
         for direction, vector in TO_VECTOR.items():
-            x, y = (xy_int + vector).as_tuple()
+            x, y = xy_int + vector
             if not walls[x][y]:
                 actions.append(direction)
 

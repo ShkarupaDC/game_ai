@@ -35,6 +35,10 @@ class Vector:
         dx, dy = abs(self - other)
         return min(dx, dy)
 
+    def euclidean(self, other: "Vector") -> float:
+        dx2, dy2 = (self - other) ** 2
+        return dx2 + dy2
+
     def nearest(self) -> "Vector":
         return self.as_int(up=True)
 
@@ -65,6 +69,12 @@ class Vector:
         return Vector(
             self.x / value,
             self.y / value,
+        )
+
+    def __pow__(self, value: float) -> "Vector":
+        return Vector(
+            self.x ** value,
+            self.y ** value,
         )
 
     def __abs__(self) -> "Vector":

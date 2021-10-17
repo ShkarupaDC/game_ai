@@ -15,3 +15,6 @@ venv/
 
 # Poetry stuff
 poetry.lock
+
+# Game
+logs

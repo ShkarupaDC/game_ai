@@ -1,13 +1,14 @@
 from typing import Callable
 
+from .problems import SearchProblem
 from ...consts.game import INF_COST
 from ...consts.types import Action
 from ...utils.data_structures import Stack, Queue, PriorityQueue
-from ...utils.general import time_it
+from ...utils.timer import time_it
 
 
 @time_it()
-def bfs(problem) -> list[Action]:
+def bfs(problem: SearchProblem) -> list[Action]:
     # For cost = const
     start = problem.get_start()
     visited = set()
@@ -29,7 +30,7 @@ def bfs(problem) -> list[Action]:
 
 
 @time_it()
-def dfs(problem) -> list[Action]:
+def dfs(problem: SearchProblem) -> list[Action]:
     # Not optimal path
     start = problem.get_start()
     visited = set()
@@ -51,7 +52,7 @@ def dfs(problem) -> list[Action]:
 
 
 @time_it(True)
-def ucs(problem) -> list[list[Action]]:
+def ucs(problem: SearchProblem) -> list[list[Action]]:
     start = problem.get_start()
     costs = {start: 0}
     visited = set()
@@ -78,7 +79,9 @@ def ucs(problem) -> list[list[Action]]:
 
 
 @time_it()
-def a_star(problem, heuristic: Callable) -> list[Action]:
+def a_star(
+    problem: SearchProblem, heuristic: Callable, greedy: bool = False
+) -> list[Action]:
     start = problem.get_start()
     costs = {start: 0}
     visited = set()
@@ -97,7 +100,9 @@ def a_star(problem, heuristic: Callable) -> list[Action]:
             new_cost = cost + move_cost
             if new_cost < costs.get(state, INF_COST):
                 new_actions = actions + [action]
-                priority = new_cost + heuristic(state, problem)
+                priority = heuristic(state, problem)
+                if not greedy:
+                    priority += new_cost
                 costs[state] = new_cost
                 queue.push((state, new_actions), priority)
 

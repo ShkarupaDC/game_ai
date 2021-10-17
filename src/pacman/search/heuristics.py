@@ -1,25 +1,20 @@
-from scipy.sparse import csr_matrix
-from scipy.sparse.csgraph import shortest_path
 import itertools
 
 from .states import FourPointState, AllFoodState, SearchState
-from .search import FourPointProblem, AllFoodProblem, PositionPoblem
-from ...consts.game import HEURISTIC_SCALER
-from ...utils.data_structures import DistanceMemory
+from .problems import FourPointProblem, AllFoodProblem, PositionProblem
+from ...utils.graph import get_maze_dists
 
 
 def distance_heuristic(
     state: SearchState,
-    problem: PositionPoblem,
+    problem: PositionProblem,
     metric: str = "manhattan",
-    greedy: bool = False,
 ) -> float:
     if problem.is_goal(state):
         return 0
-    scaler = HEURISTIC_SCALER if greedy else 1
     goal = problem.get_goal()
     metric = getattr(state.position, metric)
-    return scaler * problem.get_min_cost() * metric(goal)
+    return problem.get_min_cost() * metric(goal)
 
 
 def four_point_heuristic(
@@ -47,23 +42,12 @@ def four_point_heuristic(
 def all_food_heuristic(state: AllFoodState, problem: AllFoodProblem) -> float:
     if problem.is_goal(state):
         return 0
-
     memory = problem.history.get("memory")
     if memory is None:
-        adj_matrix, mapping = problem.as_adj_matrix()
-        adj_matrix = csr_matrix(adj_matrix)
-        goal_idxs = {
-            mapping[goal]: idx for idx, goal in enumerate(problem.get_food())
-        }
-        dist = shortest_path(
-            adj_matrix,
-            directed=False,
-            return_predecessors=False,
-            indices=list(goal_idxs.keys()),
+        memory = get_maze_dists(
+            *problem.get_adjmatrix(), goals=problem.get_food()
         )
-        memory = DistanceMemory(dist, mapping, goal_idxs)
         problem.history["memory"] = memory
-
     path_lens = [
         problem.get_min_cost() * memory.get(state.position, goal)
         for goal in list(state.rest)

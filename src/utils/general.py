@@ -1,26 +1,26 @@
-import time
-import random
 import numpy as np
-from functools import wraps
-from collections import Counter
+import inspect
 from typing import Any, Callable, Union
 
 
-def normalize(counter: dict[str, float]) -> dict[str, float]:
-    if isinstance(counter, Counter):
-        counter = dict(counter)
-    sum_all = sum(counter.values())
-    normalized = {key: value / sum_all for key, value in counter.items()}
+def normalize(
+    mapping: dict[str, float], softmax: bool = False
+) -> dict[str, float]:
+    keys, values = zip(*mapping.items())
+
+    values = np.array(values)
+    if softmax is True:
+        values = np.exp(values - np.max(values))
+    values = values / np.sum(values)
+
+    normalized = dict(zip(keys, values.tolist()))
     return normalized
 
 
 def sample(dist: dict[int, float], count: int = 1) -> Union[int, list[int]]:
     values, probs = zip(*dist.items())
-    actions = random.choices(
-        population=values,
-        weights=probs,
-        k=count,
-    )
+    actions = np.random.choice(values, size=count, replace=False, p=probs)
+    actions = actions.tolist()
     return actions[0] if len(actions) == 1 else actions
 
 
@@ -33,28 +33,18 @@ def color_to_vector(color: str) -> list[float]:
     return list(map(mapping, rgb))
 
 
-def time_it(stdout: bool = False) -> Callable:
-    def timer(function: Callable) -> Callable:
-        @wraps(function)
-        def wrapper(*args, **kwargs) -> Any:
-            start = time.time()
-            result = function(*args, **kwargs)
-            end = time.time()
-
-            if stdout is True:
-                print(f"Time ({function.__name__}):", end - start)
-            return result
-
-        return wrapper
-
-    return timer
-
-
-def get_empty_adj_matrix(size: int) -> np.ndarray:
-    adj_matrix = np.full((size, size), float("inf"))
-    np.fill_diagonal(adj_matrix, 0)
-    return adj_matrix
-
-
 def nearest_odd(value: int) -> int:
     return value + 1 if value % 2 == 0 else value
+
+
+def sort_dict(
+    mapping: dict[Any, Any], by_value: bool = False
+) -> dict[Any, Any]:
+    mapping = dict(
+        sorted(mapping.items(), key=lambda pair: pair[1 if by_value else 0])
+    )
+    return mapping
+
+
+def get_arg_names(fn: Callable) -> list[str]:
+    return list(inspect.signature(fn).parameters.keys())

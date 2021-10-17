@@ -4,8 +4,11 @@ from dataclasses import InitVar, dataclass
 
 from .agent import Agent, AgentState, Configuration
 from ..consts.direction import Direction
+from ..consts.types import Action, GameResult
 from ..utils.vector import Vector
 from ..utils.layout import Layout
+from ..utils.logger import Logger
+from ..utils.timer import Timer
 
 
 @dataclass
@@ -14,6 +17,7 @@ class GameStateData:
     _food_eaten: Vector = None
     _capsule_eaten: Vector = None
     _agent_moved: int = None
+    _last_action: Action = None
     _lose: bool = False
     _win: bool = False
     score_change: int = 0
@@ -49,18 +53,34 @@ class GameStateData:
 
 
 class Game:
-    def __init__(self, agents: list[Agent], display, rules) -> None:
+    def __init__(
+        self, agents: list[Agent], display, rules, log_path: str
+    ) -> None:
         self.agentCrashed = False
         self.agents = agents
         self.display = display
         self.rules = rules
         self.game_over = False
+        self.logger = Logger(log_path)
+        self.timer = Timer()
         self.history = []
+
+    def __get_result(self) -> Optional[GameResult]:
+        if self.game_over:
+            result = {
+                "is_win": self.state.is_win(),
+                "time": self.timer.elapsed,
+                "score": self.state.get_score(),
+                "algo": self.agents[0].get_algo(),
+            }
+            return result
+        return None
 
     def run(self) -> None:
         self.display.init(self.state.data)
         self.num_moves = 0
 
+        self.timer.start()
         for agent in self.agents:
             if hasattr(agent, "register_state"):
                 agent.register_state(self.state)
@@ -82,4 +102,9 @@ class Game:
                 self.num_moves += 1
             agent_idx = (agent_idx + 1) % num_agents
 
+        self.timer.stop()
         self.display.finish()
+
+        result = self.__get_result()
+        if result is not None:
+            self.logger.log_result(result)

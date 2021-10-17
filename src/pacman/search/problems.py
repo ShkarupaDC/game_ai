@@ -1,4 +1,3 @@
-import numpy as np
 from collections import defaultdict
 from typing import Optional, Type, Any
 
@@ -6,9 +5,16 @@ from .states import SearchState, FourPointState, AllFoodState
 from .cost_fns import CostFn, UniformCostFn
 from ..agent import Actions
 from ...consts.direction import Direction
-from ...consts.types import AdjList, Position, Cost, Action
-from ...utils.data_structures import Queue, IndexDict
-from ...utils.general import get_empty_adj_matrix
+from ...consts.types import (
+    AdjList,
+    AdjMatrix,
+    PosToIdx,
+    Position,
+    Cost,
+    Action,
+)
+from ...utils.graph import adjlist_to_adjmatrix
+from ...utils.data_structures import Queue
 
 Neighbor = tuple[SearchState, Action, Cost]
 
@@ -32,13 +38,13 @@ class SearchProblem:
     def get_neighbors(self, state: SearchState) -> list[Neighbor]:
         neighbors = []
         for action in Direction.as_list():
-            shift = Actions.direction_to_vector(action)
+            move = Actions.direction_to_vector(action)
 
-            new_position = (state.position + shift).as_int()
-            xx, yy = new_position
+            position = (state.position + move).as_int()
+            xx, yy = position
 
             if not self.walls[xx][yy]:
-                neighbor = self.get_neighbor(state, new_position, action)
+                neighbor = self.get_neighbor(state, position, action)
                 neighbors.append(neighbor)
 
         return neighbors
@@ -46,53 +52,49 @@ class SearchProblem:
     def is_goal(self, state: SearchState) -> bool:
         raise NotImplementedError
 
-    def as_adj_list(self) -> tuple[AdjList, dict[Position, int]]:
-        start = self.get_start()
-        visited, queue = set(), Queue()
-        queue.push(start)
-        adj_list = defaultdict(list)
-        mapping = IndexDict()
-
-        while not queue.is_empty():
-            parent = queue.pop()
-            p_idx = mapping[parent.position]
-            visited.add(p_idx)
-            for state, _, cost in self.get_neighbors(parent):
-                n_idx = mapping[state.position]
-                adj_list[p_idx].append((n_idx, cost))
-                if n_idx not in visited:
-                    queue.push(state)
-
-        return adj_list, mapping.as_dict()
-
     def get_start(self) -> Position:
         raise NotImplementedError
 
-    def as_adj_matrix(self) -> tuple[np.ndarray, dict[Position, int]]:
-        adj_list, mapping = self.as_adj_list()
+    def get_adjlist(self) -> AdjList:
+        adjlist = defaultdict(list)
+        start = self.get_start()
+        visited = set()
+        queue = Queue()
+        queue.push(start)
 
-        adj_matrix = get_empty_adj_matrix(len(adj_list))
-        for p_idx, n_idxs in adj_list.items():
-            for n_idx, cost in n_idxs:
-                adj_matrix[p_idx, n_idx] = cost
+        while not queue.is_empty():
+            parent = queue.pop()
+            visited.add(parent.position)
 
-        return adj_matrix, mapping
+            for state, _, cost in self.get_neighbors(parent):
+                if state.position not in visited:
+                    queue.push(state)
+                adjlist[parent.position].append((state.position, cost))
+
+        return adjlist
+
+    def get_adjmatrix(self) -> tuple[AdjMatrix, PosToIdx]:
+        adjlist = self.get_adjlist()
+        return adjlist_to_adjmatrix(adjlist)
 
     def get_min_cost(self) -> Cost:
         return self.cost_fn.get_min_cost()
 
 
-class PositionPoblem(SearchProblem):
+class PositionProblem(SearchProblem):
     def __init__(
         self,
         game_state,
         goal: Position,
+        start: Optional[Position] = None,
         cost_fn: Type[CostFn] = UniformCostFn,
         **cost_kwargs: Any,
     ) -> None:
         super().__init__(game_state, cost_fn, **cost_kwargs)
+        self.start = SearchState(
+            start if start is not None else game_state.get_pacman_position()
+        )
         self.goal = goal
-        self.start = SearchState(game_state.get_pacman_position())
 
     def is_goal(self, state: SearchState) -> bool:
         return state.position == self.goal

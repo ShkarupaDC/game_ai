@@ -4,11 +4,11 @@ from typing import Optional
 from .game import GameStateData, Game
 from .agent import Agent, Actions, AgentState
 from ..consts.game import *
-from ..consts.types import Position
+from ..consts.types import Action, Position
 from ..consts.direction import Direction
 from ..utils.layout import Layout
 from ..utils.vector import Vector
-from ..utils.grid import Grid
+from ..utils.grid import Walls
 
 
 @dataclass
@@ -49,6 +49,8 @@ class GameState:
 
         state.data._agent_moved = agent_idx
         state.data.score += state.data.score_change
+        state.data._last_action = action
+
         return state
 
     def is_lose(self) -> bool:
@@ -74,7 +76,7 @@ class GameState:
     def get_capsules(self) -> list[Position]:
         return self.data.capsules
 
-    def get_walls(self) -> Grid:
+    def get_walls(self) -> Walls:
         return self.data.layout.walls
 
     def get_num_food(self) -> int:
@@ -86,8 +88,17 @@ class GameState:
     def get_ghost_position(self, idx: int) -> Position:
         return self.get_ghost_state(idx).get_position()
 
+    def get_ghost_positions(self) -> list[Position]:
+        return [ghost.get_position() for ghost in self.data.agent_states[1:]]
+
     def get_food_sources(self) -> list[Position]:
         return self.data.food.get_positions()
+
+    def get_score(self) -> float:
+        return self.data.score
+
+    def get_last_action(self) -> Action:
+        return self.data._last_action
 
 
 class GameRules:
@@ -97,11 +108,12 @@ class GameRules:
         pacman_agent: list[Agent],
         ghost_agents: list[Agent],
         display,
+        log_path: str,
     ) -> Game:
         agents = [pacman_agent] + ghost_agents[: layout.num_ghosts]
         state = GameState()
         state.initialize(layout, len(ghost_agents))
-        game = Game(agents, display, self)
+        game = Game(agents, display, self, log_path)
         game.state = state
         return game
 
@@ -147,7 +159,7 @@ class PacmanRules:
 
     @staticmethod
     def consume(position: Vector, state: GameState) -> None:
-        x, y = position.as_tuple()
+        x, y = position
 
         if state.data.food[x][y]:
             state.data.score_change += 10

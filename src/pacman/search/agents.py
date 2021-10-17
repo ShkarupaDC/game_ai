@@ -1,12 +1,12 @@
 from functools import partial
-import inspect
 from typing import Callable, Optional, Type, Any
 
-from .search import SearchProblem, FourPointProblem, AllFoodProblem
+from .problems import SearchProblem, FourPointProblem, AllFoodProblem
 from .heuristics import four_point_heuristic, all_food_heuristic
-from .search_solvers import a_star
+from .solvers import a_star
 from ..agent import Agent
 from ...consts.direction import Direction
+from ...utils.general import get_arg_names
 
 
 class SearchAgent(Agent):
@@ -17,12 +17,13 @@ class SearchAgent(Agent):
         heuristic: Optional[Callable] = None,
         **problem_kwargs: Any,
     ) -> None:
+        arg_names = get_arg_names(heuristic)
+        self.search_fn = (
+            partial(search_fn, heuristic=heuristic)
+            if "heuristic" in arg_names
+            else search_fn
+        )
         self.problem_type = problem_type
-        arg_names = inspect.getargs(heuristic)[0]
-        if "heuristic" in arg_names:
-            self.search_fn = partial(search_fn, heuristic=heuristic)
-        else:
-            self.search_fn = search_fn
         self.problem_kwargs = problem_kwargs
 
     def get_action(self, game_state) -> int:
@@ -39,6 +40,10 @@ class SearchAgent(Agent):
         )
         self.action_idx = 0
         self.actions = self.search_fn(problem)
+
+    def get_algo(self) -> Optional[str]:
+        algo = self.search_fn
+        return (algo.func if hasattr(algo, "func") else algo).__name__
 
 
 class FourPointAgent(SearchAgent):
