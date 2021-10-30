@@ -10,6 +10,9 @@ pip-log.txt
 env/
 venv/
 
+# Jupyter Notebook
+.ipynb_checkpoints
+
 # VSCode settings
 .vscode
 

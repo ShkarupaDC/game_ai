@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument(
         "--log-path",
         type=str,
-        default="logs/log.txt",
+        default="logs/log.csv",
         help="path to file to write logs in",
     )
     parser.add_argument(

@@ -1,4 +1,5 @@
 import random
+from typing import Optional
 
 from .game import Agent
 from ..graphics.ui import UI
@@ -41,3 +42,6 @@ class KeyboardAgent(Agent):
         if Key.DOWN in self.keys and Direction.SOUTH in legal:
             move = Direction.SOUTH
         return move
+
+    def get_algo(self) -> Optional[str]:
+        return "keyboard"
