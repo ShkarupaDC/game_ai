@@ -151,7 +151,7 @@
     )
     (defn utility [self ^MinimaxState state]
       (if (. state.game game_over) 
-        (return (float "inf"))
+        (return (- (float "inf")))
       )
       (setv pacman (. state.game pacman))
       (setv ghost (. state.game ghost))

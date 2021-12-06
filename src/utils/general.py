@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 import inspect
 from typing import Any, Callable, Union
 
@@ -48,3 +49,7 @@ def sort_dict(
 
 def get_arg_names(fn: Callable) -> list[str]:
     return list(inspect.signature(fn).parameters.keys())
+
+
+def to_numpy(tensor: torch.Tensor) -> np.ndarray:
+    return tensor.cpu().detach().numpy()

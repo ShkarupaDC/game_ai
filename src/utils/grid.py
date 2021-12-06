@@ -1,6 +1,6 @@
 import numpy as np
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .data_structures import Queue
 from .graph import adjlist_to_adjmatrix
@@ -11,6 +11,8 @@ from ..consts.types import AdjList, AdjMatrix, PosToIdx, Position
 @dataclass(eq=False)
 class Grid:
     data: np.ndarray
+    width: int = field(init=False)
+    height: int = field(init=False)
 
     def __post_init__(self) -> None:
         self.width, self.height = self.data.shape

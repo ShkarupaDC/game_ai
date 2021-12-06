@@ -11,3 +11,4 @@ AdjMatrix = np.ndarray
 PosToIdx = dict[Position, int]
 TextMaze = list[list[str]]
 GameResult = dict[str, Optional[Any]]
+Params = dict[str, Any]

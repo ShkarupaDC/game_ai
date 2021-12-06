@@ -102,6 +102,10 @@ class Game:
                 self.num_moves += 1
             agent_idx = (agent_idx + 1) % num_agents
 
+        for agent in self.agents:
+            if hasattr(agent, "final"):
+                agent.final(self.state)
+
         self.timer.stop()
         self.display.finish()
 

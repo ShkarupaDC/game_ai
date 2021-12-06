@@ -1,3 +1,4 @@
+import numpy as np
 from dataclasses import InitVar, dataclass
 from typing import Optional
 
@@ -8,7 +9,7 @@ from ..consts.types import Action, Position
 from ..consts.direction import Direction
 from ..utils.layout import Layout
 from ..utils.vector import Vector
-from ..utils.grid import Walls
+from ..utils.grid import Grid, Walls
 
 
 @dataclass
@@ -62,6 +63,9 @@ class GameState:
     def initialize(self, layout: Layout, num_ghost_agents: int) -> None:
         self.data.initialize(layout, num_ghost_agents)
 
+    def get_agent_states(self) -> list[AgentState]:
+        return self.data.agent_states
+
     def get_pacman_state(self) -> AgentState:
         return self.data.agent_states[0]
 
@@ -78,6 +82,9 @@ class GameState:
 
     def get_walls(self) -> Walls:
         return self.data.layout.walls
+
+    def get_food(self) -> Grid:
+        return self.data.food
 
     def get_num_food(self) -> int:
         return self.data.food.count()
@@ -99,6 +106,27 @@ class GameState:
 
     def get_last_action(self) -> Action:
         return self.data._last_action
+
+    def get_pacman_matrix(self) -> np.ndarray:
+        pacman = self.get_pacman_state()
+        walls = self.get_walls().data
+
+        matrix = np.zeros_like(walls)
+        if pacman.is_pacman:
+            xx, yy = pacman.get_position().as_int()
+            matrix[xx][yy] = 1
+        return matrix
+
+    def get_ghost_matrix(self) -> np.ndarray:
+        agents = self.get_agent_states()
+        walls = self.get_walls().data
+
+        matrix = np.zeros_like(walls)
+        for agent in agents:
+            if not agent.is_pacman:
+                xx, yy = agent.get_position().as_int()
+                matrix[xx][yy] = 1
+        return matrix
 
 
 class GameRules:
