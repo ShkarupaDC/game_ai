@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__
+
+# Installer logs
+pip-log.txt
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VSCode settings
+.vscode
+
+# Poetry stuff
+poetry.lock
+
+# Game
+logs
